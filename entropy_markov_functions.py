@@ -20,7 +20,7 @@ def fit_to_markov(data):
     alphabet.sort()
     n = len(alphabet)
     # now, map the data to the alphabet
-    data_mapped = np.array([[alphabet.index(y) for y in x] for x in data])
+    data_mapped = np.array([[alphabet.index(y) for y in x] for x in data], dtype=object)
     states = [alphabet.index(x) for x in states]
     # get all one steps    
     one_step_trans = [(x[i], x[i+1]) for x in data_mapped for i in range(len(x)-1)]
@@ -36,6 +36,7 @@ def fit_to_markov(data):
     
     return P, n, data_mapped
 
+
 def get_ent(pi,A,n):
     # get the entropy
     ent = 0
@@ -44,8 +45,11 @@ def get_ent(pi,A,n):
             if A[i,j] ==0:
                 pass
             else:
-                ent += - pi[i]*A[i,j]*math.log(A[i,j])
-    return ent
+                if pi[i] == 0:
+                    pass
+                else:
+                    ent += - pi[i]*A[i,j]*math.log(A[i,j])
+    return ent    
     
 # function to get entropy estimates from LAMP fit
 def get_stationary(A):
@@ -53,7 +57,9 @@ def get_stationary(A):
     l = np.where(abs(e_vals-1) == np.min(abs(e_vals-1)))[0][0]
     # get real component
     v = eig_vecs[:,l].real
+
     return v/sum(v)
+
 
 def ent_est(data):
     s = [y for x in data for y in x]
@@ -88,3 +94,11 @@ def ent_est(data):
     est2 = np.mean([get_shannon(x) for x in data_mapped])
 
     return est1, est2, est3, est4
+
+def get_shannon(seq):
+    v, c = np.unique(seq, return_counts=True)
+    n = len(seq)
+    p = c / n
+
+    non_zero = p[p != 0]
+    return np.sum(-non_zero*np.log2(non_zero))
